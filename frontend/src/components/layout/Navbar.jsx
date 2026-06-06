@@ -124,9 +124,9 @@ export default function Navbar({ onToggleSidebar }) {
     if (path.startsWith('/vendors/') && path.endsWith('/edit')) return { title: 'Edit Vendor Profile', crumb: 'Home / Vendors / Edit' };
     if (path.startsWith('/vendors/')) return { title: 'Vendor Profile', crumb: 'Home / Vendors / Detail' };
     if (path.startsWith('/vendors')) return { title: 'Vendor Directory', crumb: 'Home / Vendors' };
-    if (path.startsWith('/rfqs/new')) return { title: 'Create RFQ', crumb: 'Home / RFQs / Create' };
-    if (path.startsWith('/rfqs/')) return { title: 'RFQ Requirements', crumb: 'Home / RFQs / Detail' };
-    if (path.startsWith('/rfqs')) return { title: 'RFQ Sourcing', crumb: 'Home / RFQs' };
+    if (path.startsWith('/rfq/new')) return { title: 'Create RFQ', crumb: 'Home / RFQs / Create' };
+    if (path.startsWith('/rfq/')) return { title: 'RFQ Requirements', crumb: 'Home / RFQs / Detail' };
+    if (path.startsWith('/rfq')) return { title: 'RFQ Sourcing', crumb: 'Home / RFQs' };
     if (path.startsWith('/quotations/compare/')) return { title: 'Bids Comparison', crumb: 'Home / RFQs / Comparison' };
     if (path.startsWith('/quotations/')) return { title: 'Submit Proposal', crumb: 'Home / Quotations / Submit' };
     if (path.startsWith('/quotations')) return { title: 'Quotations & Bids', crumb: 'Home / Quotations' };

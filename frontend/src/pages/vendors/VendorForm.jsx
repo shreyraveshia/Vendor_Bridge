@@ -4,33 +4,33 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import api from '@/api/axios';
-import { ArrowLeft, Save, Building2, Landmark, Check } from 'lucide-react';
+import { ArrowLeft, Save, Building, FileText, MapPin, Landmark, BookOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const schema = z.object({
   companyName: z.string().min(2, 'Company name is required'),
-  contactPerson: z.string().min(2, 'Contact person is required'),
+  contactPerson: z.string().min(2, 'Contact person name is required'),
   email: z.string().email('Invalid email address'),
   phone: z.string().min(10, 'Phone must be at least 10 digits'),
+  alternatePhone: z.string().optional().or(z.literal('')),
   category: z.string().min(1, 'Category is required'),
-  gstNumber: z.string().regex(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, 'Invalid Indian GSTIN format (e.g., 27ABCDE1234F1Z5)').optional().or(z.literal('')),
-  panNumber: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Invalid Indian PAN format (e.g., ABCDE1234F)').optional().or(z.literal('')),
-  status: z.enum(['active', 'inactive', 'suspended']).default('active'),
-  rating: z.coerce.number().min(1).max(5).optional().default(4.0),
-  notes: z.string().optional(),
+  status: z.enum(['active', 'inactive', 'blacklisted', 'pending']).default('active'),
+  gstNumber: z.string().regex(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, 'Invalid Indian GSTIN (e.g., 27ABCDE1234F1Z5)'),
+  panNumber: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Invalid Indian PAN format (e.g., ABCDE1234F)'),
   address: z.object({
     street: z.string().min(3, 'Street address is required'),
     city: z.string().min(2, 'City is required'),
     state: z.string().min(2, 'State is required'),
-    pincode: z.string().regex(/^[0-9]{6}$/, 'Pincode must be exactly 6 digits'),
-    country: z.string().min(2, 'Country is required').default('India')
+    pincode: z.string().regex(/^[0-9]{6}$/, 'Must be a 6-digit Indian PIN code'),
+    country: z.string().default('India')
   }),
   bankDetails: z.object({
     bankName: z.string().min(2, 'Bank name is required'),
     accountNumber: z.string().min(8, 'Account number must be at least 8 digits'),
-    ifscCode: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Invalid Indian IFSC format (e.g., SBIN0012345)'),
+    ifscCode: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Invalid Indian IFSC code (e.g., HDFC0001234)'),
     branchName: z.string().min(2, 'Branch name is required')
-  })
+  }),
+  notes: z.string().optional()
 });
 
 const CATEGORIES = ['IT & Technology', 'Construction', 'Office Supplies', 'Logistics', 'Electrical', 'Human Resources', 'Marketing', 'Consulting'];
@@ -40,20 +40,19 @@ export default function VendorForm() {
   const navigate = useNavigate();
   const isEdit = !!id;
   const [loading, setLoading] = useState(isEdit);
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState('basic');
 
-  const { register: regInput, handleSubmit, formState: { errors }, reset } = useForm({
+  const { register, handleSubmit, formState: { errors }, reset } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       status: 'active',
-      rating: 4.0,
       address: { country: 'India' }
     }
   });
 
   useEffect(() => {
     if (isEdit) {
-      const loadVendor = async () => {
+      const fetchVendor = async () => {
         try {
           const res = await api.get(`/vendors/${id}`);
           reset(res.data.vendor || res.data);
@@ -64,7 +63,7 @@ export default function VendorForm() {
           setLoading(false);
         }
       };
-      loadVendor();
+      fetchVendor();
     }
   }, [id, isEdit, reset, navigate]);
 
@@ -75,7 +74,7 @@ export default function VendorForm() {
         toast.success('Vendor profile updated successfully.');
       } else {
         await api.post('/vendors', data);
-        toast.success('Vendor onboarded successfully.');
+        toast.success('Vendor registered successfully.');
       }
       navigate('/vendors');
     } catch (err) {
@@ -88,7 +87,7 @@ export default function VendorForm() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
         <div className="w-8 h-8 rounded-full border-2 border-primary-200 border-t-primary-600 animate-spin" />
-        <span className="text-sm text-gray-400 font-medium">Fetching profile details…</span>
+        <span className="text-sm text-gray-400 font-medium">Retrieving vendor details…</span>
       </div>
     );
   }
@@ -104,171 +103,212 @@ export default function VendorForm() {
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-            {isEdit ? 'Edit Vendor Profile' : 'Onboard New Vendor'}
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+            {isEdit ? 'Edit Vendor Profile' : 'Register New Vendor'}
           </h1>
           <p className="text-sm text-gray-500">
-            {isEdit ? 'Modify corporate profile, addressing details and banking records.' : 'Enter details to add a new business partner.'}
+            {isEdit ? 'Modify corporate profile details, tax compliance numbers, and bank details.' : 'Enter partner details to onboard a new supplier.'}
           </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Navigation Tabs */}
-        <div className="flex border-b border-gray-100 bg-white rounded-t-xl px-4 pt-2 shadow-sm">
+        <div className="flex border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-t-xl px-4 pt-1.5 shadow-sm overflow-x-auto scrollbar-none">
           <button
             type="button"
-            onClick={() => setActiveTab('general')}
-            className={`px-4 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 ${
-              activeTab === 'general' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-950'
+            onClick={() => setActiveTab('basic')}
+            className={`px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'basic' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
-            <Building2 size={16} />
-            General Profile & Address
+            <Building size={14} /> Basic Information
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('tax')}
+            className={`px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'tax' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            <FileText size={14} /> GST & Compliance
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('address')}
+            className={`px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'address' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            <MapPin size={14} /> Address Details
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('bank')}
-            className={`px-4 py-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 ${
-              activeTab === 'bank' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-950'
+            className={`px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'bank' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
-            <Landmark size={16} />
-            Banking & Regulatory Compliance
+            <Landmark size={14} /> Bank Credentials
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('additional')}
+            className={`px-4 py-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'additional' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            <BookOpen size={14} /> Additional Info
           </button>
         </div>
 
-        {/* Tab content - General */}
-        <div className={`card p-6 space-y-6 rounded-t-none ${activeTab === 'general' ? 'block' : 'hidden'}`}>
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Business Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Tab 1: Basic Information */}
+        <div className={`card p-6 space-y-4 rounded-t-none ${activeTab === 'basic' ? 'block' : 'hidden'}`}>
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Basic Profile</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">Company Name *</label>
-              <input type="text" {...regInput('companyName')} className="input" />
-              {errors.companyName && <p className="text-xs text-red-500 mt-1">{errors.companyName.message}</p>}
+              <input type="text" {...register('companyName')} className="input text-xs" />
+              {errors.companyName && <p className="text-2xs text-red-500 mt-1">{errors.companyName.message}</p>}
             </div>
             <div>
-              <label className="label">Contact Person Name *</label>
-              <input type="text" {...regInput('contactPerson')} className="input" />
-              {errors.contactPerson && <p className="text-xs text-red-500 mt-1">{errors.contactPerson.message}</p>}
+              <label className="label">Contact Person *</label>
+              <input type="text" {...register('contactPerson')} className="input text-xs" />
+              {errors.contactPerson && <p className="text-2xs text-red-500 mt-1">{errors.contactPerson.message}</p>}
             </div>
             <div>
               <label className="label">Email Address *</label>
-              <input type="email" {...regInput('email')} className="input" />
-              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+              <input type="email" {...register('email')} className="input text-xs" />
+              {errors.email && <p className="text-2xs text-red-500 mt-1">{errors.email.message}</p>}
             </div>
             <div>
               <label className="label">Phone Number *</label>
-              <input type="text" {...regInput('phone')} className="input" />
-              {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone.message}</p>}
+              <input type="text" {...register('phone')} className="input text-xs" />
+              {errors.phone && <p className="text-2xs text-red-500 mt-1">{errors.phone.message}</p>}
             </div>
             <div>
-              <label className="label">Industry Category *</label>
-              <select {...regInput('category')} className="input">
-                <option value="">Select category</option>
-                {CATEGORIES.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
+              <label className="label">Category *</label>
+              <select {...register('category')} className="input text-xs">
+                <option value="">Select Category</option>
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
-              {errors.category && <p className="text-xs text-red-500 mt-1">{errors.category.message}</p>}
+              {errors.category && <p className="text-2xs text-red-500 mt-1">{errors.category.message}</p>}
             </div>
             <div>
-              <label className="label">Partnership Status</label>
-              <select {...regInput('status')} className="input">
+              <label className="label">Status</label>
+              <select {...register('status')} className="input text-xs">
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
-                <option value="suspended">Suspended</option>
+                <option value="blacklisted">Blacklisted</option>
+                <option value="pending">Pending</option>
               </select>
             </div>
           </div>
+        </div>
 
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider pt-4 border-t border-gray-50">Office Address</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-3">
-              <label className="label">Street details *</label>
-              <input type="text" {...regInput('address.street')} className="input" />
-              {errors.address?.street && <p className="text-xs text-red-500 mt-1">{errors.address.street.message}</p>}
+        {/* Tab 2: GST & Tax */}
+        <div className={`card p-6 space-y-4 rounded-t-none ${activeTab === 'tax' ? 'block' : 'hidden'}`}>
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Tax Registration Compliance</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="label">GSTIN (Indian GST Number) *</label>
+              <input type="text" placeholder="27ABCDE1234F1Z5" {...register('gstNumber')} className="input text-xs uppercase" />
+              <p className="text-[10px] text-gray-400 mt-1">Format: 2 digits State Code + 10-char PAN + 1 Entity Code + 1 'Z' + 1 Check Sum</p>
+              {errors.gstNumber && <p className="text-2xs text-red-500 mt-1">{errors.gstNumber.message}</p>}
+            </div>
+            <div>
+              <label className="label">PAN Number *</label>
+              <input type="text" placeholder="ABCDE1234F" {...register('panNumber')} className="input text-xs uppercase" />
+              <p className="text-[10px] text-gray-400 mt-1">Format: 5 letters + 4 digits + 1 letter</p>
+              {errors.panNumber && <p className="text-2xs text-red-500 mt-1">{errors.panNumber.message}</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* Tab 3: Address */}
+        <div className={`card p-6 space-y-4 rounded-t-none ${activeTab === 'address' ? 'block' : 'hidden'}`}>
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Office Address Details</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="sm:col-span-3">
+              <label className="label">Street / Area details *</label>
+              <input type="text" {...register('address.street')} className="input text-xs" />
+              {errors.address?.street && <p className="text-2xs text-red-500 mt-1">{errors.address.street.message}</p>}
             </div>
             <div>
               <label className="label">City *</label>
-              <input type="text" {...regInput('address.city')} className="input" />
-              {errors.address?.city && <p className="text-xs text-red-500 mt-1">{errors.address.city.message}</p>}
+              <input type="text" {...register('address.city')} className="input text-xs" />
+              {errors.address?.city && <p className="text-2xs text-red-500 mt-1">{errors.address.city.message}</p>}
             </div>
             <div>
               <label className="label">State *</label>
-              <input type="text" {...regInput('address.state')} className="input" />
-              {errors.address?.state && <p className="text-xs text-red-500 mt-1">{errors.address.state.message}</p>}
+              <input type="text" {...register('address.state')} className="input text-xs" />
+              {errors.address?.state && <p className="text-2xs text-red-500 mt-1">{errors.address.state.message}</p>}
             </div>
             <div>
-              <label className="label">Pincode (6-digit PIN) *</label>
-              <input type="text" {...regInput('address.pincode')} className="input" />
-              {errors.address?.pincode && <p className="text-xs text-red-500 mt-1">{errors.address.pincode.message}</p>}
+              <label className="label">Pincode (6-digits) *</label>
+              <input type="text" {...register('address.pincode')} className="input text-xs" />
+              {errors.address?.pincode && <p className="text-2xs text-red-500 mt-1">{errors.address.pincode.message}</p>}
             </div>
           </div>
         </div>
 
-        {/* Tab content - Financial & Compliance */}
-        <div className={`card p-6 space-y-6 rounded-t-none ${activeTab === 'bank' ? 'block' : 'hidden'}`}>
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Regulatory Credentials</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Tab 4: Bank Details */}
+        <div className={`card p-6 space-y-4 rounded-t-none ${activeTab === 'bank' ? 'block' : 'hidden'}`}>
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Remittance Bank Details</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label">GSTIN (15 characters)</label>
-              <input type="text" placeholder="27ABCDE1234F1Z5" {...regInput('gstNumber')} className="input uppercase" />
-              {errors.gstNumber && <p className="text-xs text-red-500 mt-1">{errors.gstNumber.message}</p>}
-            </div>
-            <div>
-              <label className="label">PAN Number (10 characters)</label>
-              <input type="text" placeholder="ABCDE1234F" {...regInput('panNumber')} className="input uppercase" />
-              {errors.panNumber && <p className="text-xs text-red-500 mt-1">{errors.panNumber.message}</p>}
-            </div>
-          </div>
-
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider pt-4 border-t border-gray-50">Settlement Bank Details</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="label">Settlement Bank Name *</label>
-              <input type="text" {...regInput('bankDetails.bankName')} className="input" />
-              {errors.bankDetails?.bankName && <p className="text-xs text-red-500 mt-1">{errors.bankDetails.bankName.message}</p>}
+              <label className="label">Bank Name *</label>
+              <input type="text" {...register('bankDetails.bankName')} className="input text-xs" />
+              {errors.bankDetails?.bankName && <p className="text-2xs text-red-500 mt-1">{errors.bankDetails.bankName.message}</p>}
             </div>
             <div>
               <label className="label">Account Number *</label>
-              <input type="text" {...regInput('bankDetails.accountNumber')} className="input" />
-              {errors.bankDetails?.accountNumber && <p className="text-xs text-red-500 mt-1">{errors.bankDetails.accountNumber.message}</p>}
+              <input type="text" {...register('bankDetails.accountNumber')} className="input text-xs" />
+              {errors.bankDetails?.accountNumber && <p className="text-2xs text-red-500 mt-1">{errors.bankDetails.accountNumber.message}</p>}
             </div>
             <div>
-              <label className="label">IFSC Code (11 characters) *</label>
-              <input type="text" placeholder="HDFC0001234" {...regInput('bankDetails.ifscCode')} className="input uppercase" />
-              {errors.bankDetails?.ifscCode && <p className="text-xs text-red-500 mt-1">{errors.bankDetails.ifscCode.message}</p>}
+              <label className="label">IFSC Code *</label>
+              <input type="text" placeholder="HDFC0001234" {...register('bankDetails.ifscCode')} className="input text-xs uppercase" />
+              {errors.bankDetails?.ifscCode && <p className="text-2xs text-red-500 mt-1">{errors.bankDetails.ifscCode.message}</p>}
             </div>
             <div>
               <label className="label">Branch Name *</label>
-              <input type="text" {...regInput('bankDetails.branchName')} className="input" />
-              {errors.bankDetails?.branchName && <p className="text-xs text-red-500 mt-1">{errors.bankDetails.branchName.message}</p>}
+              <input type="text" {...register('bankDetails.branchName')} className="input text-xs" />
+              {errors.bankDetails?.branchName && <p className="text-2xs text-red-500 mt-1">{errors.bankDetails.branchName.message}</p>}
             </div>
-          </div>
-
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider pt-4 border-t border-gray-50">Additional Notes</h3>
-          <div>
-            <label className="label">Partnership Notes</label>
-            <textarea rows="3" {...regInput('notes')} className="input" placeholder="e.g. key performance comments, SLA ratings..." />
           </div>
         </div>
 
-        {/* Form Footer */}
+        {/* Tab 5: Additional */}
+        <div className={`card p-6 space-y-4 rounded-t-none ${activeTab === 'additional' ? 'block' : 'hidden'}`}>
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Secondary Parameters</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="label">Alternate Phone Number</label>
+              <input type="text" {...register('alternatePhone')} className="input text-xs" />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="label">Internal Sourcing Notes</label>
+              <textarea rows="3" {...register('notes')} className="input text-xs" placeholder="e.g. partnership conditions, capacity comments..." />
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
         <div className="flex justify-end gap-3 pt-2">
           <button
             type="button"
             onClick={() => navigate('/vendors')}
-            className="btn btn-outline"
+            className="btn btn-secondary text-xs"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="btn btn-primary flex items-center gap-2"
+            className="btn btn-primary text-xs flex items-center gap-1.5"
           >
-            <Save size={16} />
-            {isEdit ? 'Save Changes' : 'Onboard Vendor'}
+            <Save size={14} />
+            {isEdit ? 'Save Changes' : 'Onboard Partner'}
           </button>
         </div>
       </form>

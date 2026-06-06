@@ -390,13 +390,13 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {isProcurement && (
               <>
-                <button onClick={() => navigate('/rfqs/new')} className="btn btn-outline border-slate-200 dark:border-slate-800 py-3 text-xs flex flex-col items-center gap-2 text-slate-700 dark:text-slate-300">
+                <button onClick={() => navigate('/rfq/new')} className="btn btn-outline border-slate-200 dark:border-slate-800 py-3 text-xs flex flex-col items-center gap-2 text-slate-700 dark:text-slate-300">
                   <Plus size={16} className="text-primary-600" /> New Sourcing RFQ
                 </button>
                 <button onClick={() => navigate('/vendors/new')} className="btn btn-outline border-slate-200 dark:border-slate-800 py-3 text-xs flex flex-col items-center gap-2 text-slate-700 dark:text-slate-300">
                   <Building size={16} className="text-blue-600" /> Onboard Supplier
                 </button>
-                <button onClick={() => navigate('/rfqs')} className="btn btn-outline border-slate-200 dark:border-slate-800 py-3 text-xs flex flex-col items-center gap-2 text-slate-700 dark:text-slate-300">
+                <button onClick={() => navigate('/rfq')} className="btn btn-outline border-slate-200 dark:border-slate-800 py-3 text-xs flex flex-col items-center gap-2 text-slate-700 dark:text-slate-300">
                   <BarChart2 size={16} className="text-green-600" /> Compare Quotes
                 </button>
               </>
@@ -415,7 +415,7 @@ export default function Dashboard() {
 
             {isVendor && (
               <>
-                <button onClick={() => navigate('/rfqs')} className="btn btn-outline border-slate-200 dark:border-slate-800 py-3 text-xs flex flex-col items-center gap-2 text-slate-700 dark:text-slate-300">
+                <button onClick={() => navigate('/rfq')} className="btn btn-outline border-slate-200 dark:border-slate-800 py-3 text-xs flex flex-col items-center gap-2 text-slate-700 dark:text-slate-300">
                   <Send size={16} className="text-primary-600" /> Submit Quotation
                 </button>
                 <button onClick={() => navigate('/quotations')} className="btn btn-outline border-slate-200 dark:border-slate-800 py-3 text-xs flex flex-col items-center gap-2 text-slate-700 dark:text-slate-300">

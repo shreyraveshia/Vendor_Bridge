@@ -96,7 +96,7 @@ const getQuotationById = async (req, res, next) => {
 // submitQuotation(req, res, next)
 const submitQuotation = async (req, res, next) => {
   try {
-    const { rfq: rfqId, items, taxRate = 18, deliveryTimeline, deliveryTimelineUnit, validityPeriod, paymentTerms, deliveryTerms, warranty, notes } = req.body;
+    const { rfq: rfqId, items, taxRate = 18, deliveryTimeline, deliveryTimelineUnit, validityPeriod, paymentTerms, deliveryTerms, warranty, notes, status = 'submitted' } = req.body;
 
     // Validate RFQ exists and is published
     const rfq = await RFQ.findById(rfqId);
@@ -167,43 +167,57 @@ const submitQuotation = async (req, res, next) => {
       deliveryTerms,
       warranty,
       notes,
-      status: 'submitted'
+      status
     });
 
-    // Increment rfq.quotationsReceived
-    rfq.quotationsReceived += 1;
-    await rfq.save();
+    if (status === 'submitted') {
+      // Increment rfq.quotationsReceived
+      rfq.quotationsReceived += 1;
+      await rfq.save();
 
-    // Create ActivityLog
-    await logActivity({
-      user: req.user.id,
-      action: 'QUOTATION_SUBMITTED',
-      module: 'quotation',
-      description: `Quotation submitted by ${vendor.companyName} for RFQ ${rfq.rfqNumber}`,
-      entityType: 'Quotation',
-      entityId: quotation._id,
-      entityNumber: quotation.quotationNumber,
-      req
-    });
+      // Create ActivityLog
+      await logActivity({
+        user: req.user.id,
+        action: 'QUOTATION_SUBMITTED',
+        module: 'quotation',
+        description: `Quotation submitted by ${vendor.companyName} for RFQ ${rfq.rfqNumber}`,
+        entityType: 'Quotation',
+        entityId: quotation._id,
+        entityNumber: quotation.quotationNumber,
+        req
+      });
 
-    // Create notification to procurement officers
-    const staff = await User.find({ role: { $in: ['admin', 'procurement_officer'] } }).select('_id');
-    const recipientIds = staff.map(s => s._id);
+      // Create notification to procurement officers
+      const staff = await User.find({ role: { $in: ['admin', 'procurement_officer'] } }).select('_id');
+      const recipientIds = staff.map(s => s._id);
 
-    await createBulkNotifications(recipientIds, {
-      title: 'New quotation received',
-      message: `New quotation received from ${vendor.companyName} for RFQ ${rfq.rfqNumber}`,
-      type: 'quotation',
-      priority: 'normal',
-      link: `/rfqs/${rfq._id}`,
-      relatedModel: 'Quotation',
-      relatedId: quotation._id
-    });
+      await createBulkNotifications(recipientIds, {
+        title: 'New quotation received',
+        message: `New quotation received from ${vendor.companyName} for RFQ ${rfq.rfqNumber}`,
+        type: 'quotation',
+        priority: 'normal',
+        link: `/rfqs/${rfq._id}`,
+        relatedModel: 'Quotation',
+        relatedId: quotation._id
+      });
+    } else {
+      // Create ActivityLog for draft
+      await logActivity({
+        user: req.user.id,
+        action: 'QUOTATION_CREATED',
+        module: 'quotation',
+        description: `Quotation draft saved by ${vendor.companyName} for RFQ ${rfq.rfqNumber}`,
+        entityType: 'Quotation',
+        entityId: quotation._id,
+        entityNumber: quotation.quotationNumber,
+        req
+      });
+    }
 
     return res.status(201).json({
       success: true,
       quotation,
-      message: 'Quotation submitted successfully'
+      message: status === 'draft' ? 'Quotation draft saved successfully' : 'Quotation submitted successfully'
     });
   } catch (error) {
     next(error);
@@ -240,6 +254,8 @@ const updateQuotation = async (req, res, next) => {
       });
     }
 
+    const oldStatus = quotation.status;
+
     // Merge updates
     Object.assign(quotation, req.body);
 
@@ -257,17 +273,54 @@ const updateQuotation = async (req, res, next) => {
 
     await quotation.save();
 
-    // Log Activity
-    await logActivity({
-      user: req.user.id,
-      action: 'QUOTATION_UPDATED',
-      module: 'quotation',
-      description: `Quotation updated: ${quotation.quotationNumber}`,
-      entityType: 'Quotation',
-      entityId: quotation._id,
-      entityNumber: quotation.quotationNumber,
-      req
-    });
+    // If status changed from draft to submitted
+    if (oldStatus === 'draft' && quotation.status === 'submitted') {
+      const rfq = await RFQ.findById(quotation.rfq);
+      if (rfq) {
+        rfq.quotationsReceived += 1;
+        await rfq.save();
+
+        const vendor = await Vendor.findById(quotation.vendor);
+        
+        // Log Activity
+        await logActivity({
+          user: req.user.id,
+          action: 'QUOTATION_SUBMITTED',
+          module: 'quotation',
+          description: `Quotation submitted by ${vendor?.companyName || 'Vendor'} for RFQ ${rfq.rfqNumber}`,
+          entityType: 'Quotation',
+          entityId: quotation._id,
+          entityNumber: quotation.quotationNumber,
+          req
+        });
+
+        // Notify procurement officers
+        const staff = await User.find({ role: { $in: ['admin', 'procurement_officer'] } }).select('_id');
+        const recipientIds = staff.map(s => s._id);
+
+        await createBulkNotifications(recipientIds, {
+          title: 'New quotation received',
+          message: `New quotation received from ${vendor?.companyName || 'Vendor'} for RFQ ${rfq.rfqNumber}`,
+          type: 'quotation',
+          priority: 'normal',
+          link: `/rfqs/${rfq._id}`,
+          relatedModel: 'Quotation',
+          relatedId: quotation._id
+        });
+      }
+    } else {
+      // Log Activity for standard update
+      await logActivity({
+        user: req.user.id,
+        action: 'QUOTATION_UPDATED',
+        module: 'quotation',
+        description: `Quotation updated: ${quotation.quotationNumber}`,
+        entityType: 'Quotation',
+        entityId: quotation._id,
+        entityNumber: quotation.quotationNumber,
+        req
+      });
+    }
 
     return res.status(200).json({
       success: true,

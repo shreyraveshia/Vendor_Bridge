@@ -106,7 +106,7 @@ export default function QuotationList() {
                   <tr key={quote._id} className="hover:bg-gray-50/50">
                     <td className="font-semibold text-gray-900">{quote.quotationNumber}</td>
                     <td>
-                      <Link to={`/rfqs/${quote.rfq?._id || quote.rfq}`} className="text-primary-600 font-medium hover:underline">
+                      <Link to={`/rfq/${quote.rfq?._id || quote.rfq}`} className="text-primary-600 font-medium hover:underline">
                         {quote.rfq?.title || 'View RFQ details'}
                       </Link>
                     </td>
@@ -136,7 +136,7 @@ export default function QuotationList() {
                     <td>
                       <div className="flex justify-center">
                         <button
-                          onClick={() => navigate(`/rfqs/${quote.rfq?._id || quote.rfq}`)}
+                          onClick={() => navigate(`/rfq/${quote.rfq?._id || quote.rfq}`)}
                           className="btn-ghost p-1.5 rounded hover:bg-slate-100 text-gray-600 hover:text-gray-900 flex items-center gap-1 text-xs"
                         >
                           Details <ArrowRight size={14} />

@@ -12,9 +12,9 @@ import Dashboard          from '@/pages/dashboard/Dashboard';
 import VendorList         from '@/pages/vendors/VendorList';
 import VendorForm         from '@/pages/vendors/VendorForm';
 import VendorDetail       from '@/pages/vendors/VendorDetail';
-import RFQList            from '@/pages/rfqs/RFQList';
-import RFQForm            from '@/pages/rfqs/RFQForm';
-import RFQDetail          from '@/pages/rfqs/RFQDetail';
+import RFQList            from '@/pages/rfq/RFQList';
+import RFQForm            from '@/pages/rfq/RFQForm';
+import RFQDetail          from '@/pages/rfq/RFQDetail';
 import QuotationList      from '@/pages/quotations/QuotationList';
 import QuotationForm      from '@/pages/quotations/QuotationForm';
 import QuotationComparison from '@/pages/quotations/QuotationComparison';
@@ -107,8 +107,8 @@ export default function App() {
             {/* Protected — all authenticated users */}
             <Route element={<ProtectedLayout />}>
               <Route path="/dashboard"      element={<Dashboard />} />
-              <Route path="/rfqs"           element={<RFQList />} />
-              <Route path="/rfqs/:id"       element={<RFQDetail />} />
+              <Route path="/rfq"            element={<RFQList />} />
+              <Route path="/rfq/:id"        element={<RFQDetail />} />
               <Route path="/quotations"     element={<QuotationList />} />
               <Route path="/quotations/compare/:rfqId" element={<QuotationComparison />} />
               <Route path="/purchase-orders"    element={<POList />} />
@@ -128,7 +128,7 @@ export default function App() {
             <Route element={<ProtectedLayout allowedRoles={['admin','procurement_officer']} />}>
               <Route path="/vendors/new"      element={<VendorForm />} />
               <Route path="/vendors/:id/edit" element={<VendorForm />} />
-              <Route path="/rfqs/new"         element={<RFQForm />} />
+              <Route path="/rfq/new"          element={<RFQForm />} />
             </Route>
 
             {/* Protected — admin + procurement_officer + manager */}

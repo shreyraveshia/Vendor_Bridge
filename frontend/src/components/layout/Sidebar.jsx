@@ -27,7 +27,7 @@ const GROUPS = [
   {
     title: 'Procurement',
     items: [
-      { to: '/rfqs', label: 'RFQs', icon: FileText, roles: null },
+      { to: '/rfq', label: 'RFQs', icon: FileText, roles: null },
       { to: '/quotations', label: 'Quotations', icon: MessageSquare, roles: null },
       { to: '/approvals', label: 'Approvals', icon: CheckCircle, roles: ['admin', 'manager', 'procurement_officer'] }
     ]
