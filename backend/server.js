@@ -118,6 +118,19 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// 10b. Seed database endpoint (Admin only)
+app.post('/api/seed', require('./middleware/auth.middleware').protect, require('./middleware/rbac.middleware').authorize('admin'), (req, res) => {
+  const { exec } = require('child_process');
+  exec('node utils/seedData.js', (err, stdout, stderr) => {
+    if (err) {
+      console.error('Seed execution error:', err);
+      return res.status(500).json({ success: false, message: 'Failed to seed database: ' + err.message });
+    }
+    return res.status(200).json({ success: true, message: 'Database seeded successfully', output: stdout });
+  });
+});
+
+
 // 11. 404 handler for unknown routes
 app.use('*', (req, res) => {
   res.status(404).json({

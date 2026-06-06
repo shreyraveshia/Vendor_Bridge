@@ -1,15 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
-import Layout from '@/components/Layout';
+import Layout from '@/components/layout/Layout';
 
 // ── Auth pages ─────────────────────────────────────────────────────────────
 import Login    from '@/pages/auth/Login';
 import Register from '@/pages/auth/Register';
 
 // ── App pages (stubs — implemented progressively) ──────────────────────────
-import Dashboard          from '@/pages/Dashboard';
+import Dashboard          from '@/pages/dashboard/Dashboard';
 import VendorList         from '@/pages/vendors/VendorList';
 import VendorForm         from '@/pages/vendors/VendorForm';
 import VendorDetail       from '@/pages/vendors/VendorDetail';
@@ -99,22 +98,6 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '14px',
-                fontWeight: '500',
-                borderRadius: '10px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-              },
-              success: { iconTheme: { primary: '#16a34a', secondary: '#fff' } },
-              error:   { iconTheme: { primary: '#dc2626', secondary: '#fff' } },
-            }}
-          />
-
           <Routes>
             {/* Public routes */}
             <Route path="/login"    element={<Login />} />
