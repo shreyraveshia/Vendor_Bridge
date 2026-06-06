@@ -53,8 +53,10 @@ async function dropAll() {
 }
 
 // ── Main seed ──────────────────────────────────────────────────────────────
-async function seed() {
-  await connect();
+async function seed(disconnectAfterSeed = true) {
+  if (mongoose.connection.readyState === 0) {
+    await connect();
+  }
   await dropAll();
 
   // ═══════════════════════════════════════════════════════════════
@@ -613,12 +615,18 @@ async function seed() {
   Grand Total : ₹${poTotal.toLocaleString('en-IN')}
   In Words    : ${words}
 `);
+  if (disconnectAfterSeed) {
+    await mongoose.disconnect();
+    console.log('🔌 Disconnected from MongoDB');
+  }
 }
 
 // ── Run ────────────────────────────────────────────────────────────────────
-seed()
-  .catch(err => {
+if (require.main === module) {
+  seed(true).catch(err => {
     console.error('❌ Seed failed:', err);
     process.exit(1);
-  })
-  .finally(() => mongoose.disconnect());
+  });
+}
+
+module.exports = () => seed(false);

@@ -41,6 +41,7 @@ const invoiceRoutes = loadRoute('./routes/invoice.routes');
 const notificationRoutes = loadRoute('./routes/notification.routes');
 const activityLogRoutes = loadRoute('./routes/activityLog.routes');
 const reportRoutes = loadRoute('./routes/report.routes');
+const adminRoutes = loadRoute('./routes/admin.routes');
 
 // 5. Import errorHandler from middleware/errorHandler.middleware.js
 const errorHandler = require('./middleware/errorHandler.middleware');
@@ -105,6 +106,7 @@ app.use('/api/invoices',        invoiceRoutes);
 app.use('/api/notifications',   notificationRoutes);
 app.use('/api/activity-logs',   activityLogRoutes);
 app.use('/api/reports',         reportRoutes);
+app.use('/api/admin',           adminRoutes);
 
 // 10. Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -119,15 +121,15 @@ app.get('/api/health', (req, res) => {
 });
 
 // 10b. Seed database endpoint (Admin only)
-app.post('/api/seed', require('./middleware/auth.middleware').protect, require('./middleware/rbac.middleware').authorize('admin'), (req, res) => {
-  const { exec } = require('child_process');
-  exec('node utils/seedData.js', (err, stdout, stderr) => {
-    if (err) {
-      console.error('Seed execution error:', err);
-      return res.status(500).json({ success: false, message: 'Failed to seed database: ' + err.message });
-    }
-    return res.status(200).json({ success: true, message: 'Database seeded successfully', output: stdout });
-  });
+app.post('/api/seed', require('./middleware/auth.middleware').protect, require('./middleware/rbac.middleware').authorize('admin'), async (req, res) => {
+  try {
+    const seed = require('./utils/seedData');
+    await seed();
+    res.status(200).json({ success: true, message: 'Database seeded successfully' });
+  } catch (err) {
+    console.error('Seed execution error:', err);
+    res.status(500).json({ success: false, message: 'Failed to seed database: ' + err.message });
+  }
 });
 
 

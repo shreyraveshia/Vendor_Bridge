@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 import Layout from '@/components/layout/Layout';
 
 // ── Auth pages ─────────────────────────────────────────────────────────────
@@ -23,9 +24,9 @@ import POList             from '@/pages/purchaseOrders/POList';
 import PODetail           from '@/pages/purchaseOrders/PODetail';
 import InvoiceList        from '@/pages/invoices/InvoiceList';
 import InvoiceDetail      from '@/pages/invoices/InvoiceDetail';
-import Reports            from '@/pages/Reports';
-import ActivityLogs       from '@/pages/ActivityLogs';
-import AdminPanel         from '@/pages/AdminPanel';
+import Reports            from '@/pages/reports/Reports';
+import ActivityLogs       from '@/pages/activity/ActivityLogs';
+import AdminPanel         from '@/pages/admin/AdminPanel';
 import NotFound           from '@/pages/NotFound';
 
 // ── Query Client ───────────────────────────────────────────────────────────
@@ -97,56 +98,58 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login"    element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/"         element={<RootRedirect />} />
+        <ThemeProvider>
+          <AuthProvider>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login"    element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/"         element={<RootRedirect />} />
 
-            {/* Protected — all authenticated users */}
-            <Route element={<ProtectedLayout />}>
-              <Route path="/dashboard"      element={<Dashboard />} />
-              <Route path="/rfq"            element={<RFQList />} />
-              <Route path="/rfq/:id"        element={<RFQDetail />} />
-              <Route path="/quotations"     element={<QuotationList />} />
-              <Route path="/quotations/compare/:rfqId" element={<QuotationComparison />} />
-              <Route path="/purchase-orders"    element={<POList />} />
-              <Route path="/purchase-orders/:id" element={<PODetail />} />
-              <Route path="/invoices"       element={<InvoiceList />} />
-              <Route path="/invoices/:id"   element={<InvoiceDetail />} />
-              <Route path="/activity"       element={<ActivityLogs />} />
-              <Route path="/vendors/:id"    element={<VendorDetail />} />
-            </Route>
+              {/* Protected — all authenticated users */}
+              <Route element={<ProtectedLayout />}>
+                <Route path="/dashboard"      element={<Dashboard />} />
+                <Route path="/rfq"            element={<RFQList />} />
+                <Route path="/rfq/:id"        element={<RFQDetail />} />
+                <Route path="/quotations"     element={<QuotationList />} />
+                <Route path="/quotations/compare/:rfqId" element={<QuotationComparison />} />
+                <Route path="/purchase-orders"    element={<POList />} />
+                <Route path="/purchase-orders/:id" element={<PODetail />} />
+                <Route path="/invoices"       element={<InvoiceList />} />
+                <Route path="/invoices/:id"   element={<InvoiceDetail />} />
+                <Route path="/activity"       element={<ActivityLogs />} />
+                <Route path="/vendors/:id"    element={<VendorDetail />} />
+              </Route>
 
-            {/* Protected — vendor role only */}
-            <Route element={<ProtectedLayout allowedRoles={['vendor']} />}>
-              <Route path="/quotations/:rfqId/submit" element={<QuotationForm />} />
-            </Route>
+              {/* Protected — vendor role only */}
+              <Route element={<ProtectedLayout allowedRoles={['vendor']} />}>
+                <Route path="/quotations/:rfqId/submit" element={<QuotationForm />} />
+              </Route>
 
-            {/* Protected — admin + procurement_officer */}
-            <Route element={<ProtectedLayout allowedRoles={['admin','procurement_officer']} />}>
-              <Route path="/vendors/new"      element={<VendorForm />} />
-              <Route path="/vendors/:id/edit" element={<VendorForm />} />
-              <Route path="/rfq/new"          element={<RFQForm />} />
-            </Route>
+              {/* Protected — admin + procurement_officer */}
+              <Route element={<ProtectedLayout allowedRoles={['admin','procurement_officer']} />}>
+                <Route path="/vendors/new"      element={<VendorForm />} />
+                <Route path="/vendors/:id/edit" element={<VendorForm />} />
+                <Route path="/rfq/new"          element={<RFQForm />} />
+              </Route>
 
-            {/* Protected — admin + procurement_officer + manager */}
-            <Route element={<ProtectedLayout allowedRoles={['admin','procurement_officer','manager']} />}>
-              <Route path="/vendors"    element={<VendorList />} />
-              <Route path="/approvals"  element={<ApprovalList />} />
-              <Route path="/reports"    element={<Reports />} />
-            </Route>
+              {/* Protected — admin + procurement_officer + manager */}
+              <Route element={<ProtectedLayout allowedRoles={['admin','procurement_officer','manager']} />}>
+                <Route path="/vendors"    element={<VendorList />} />
+                <Route path="/approvals"  element={<ApprovalList />} />
+                <Route path="/reports"    element={<Reports />} />
+              </Route>
 
-            {/* Protected — admin only */}
-            <Route element={<ProtectedLayout allowedRoles={['admin']} />}>
-              <Route path="/admin" element={<AdminPanel />} />
-            </Route>
+              {/* Protected — admin only */}
+              <Route element={<ProtectedLayout allowedRoles={['admin']} />}>
+                <Route path="/admin" element={<AdminPanel />} />
+              </Route>
 
-            {/* 404 */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
+              {/* 404 */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </ThemeProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );

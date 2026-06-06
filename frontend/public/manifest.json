@@ -1,0 +1,21 @@
+{
+  "name": "VendorBridge ERP",
+  "short_name": "VendorBridge",
+  "description": "Modern Procurement & Vendor Management ERP",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "icons": [
+    {
+      "src": "/vb-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/vb-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

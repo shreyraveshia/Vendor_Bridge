@@ -256,7 +256,8 @@ const getProcurementStats = async (req, res, next) => {
       monthlySpend,
       categorySpend,
       funnelCounts,
-      avgCycleTime
+      avgCycleTime,
+      rfqsByMonth
     ] = await Promise.all([
 
       // Monthly spend trend — last 12 months
@@ -345,6 +346,26 @@ const getProcurementStats = async (req, res, next) => {
             maxCycleTimeDays: { $max: '$cycleTimeDays' }
           }
         }
+      ]),
+
+      // Monthly RFQs counts - last 12 months
+      RFQ.aggregate([
+        { $match: { createdAt: { $gte: twelveMonthsAgo } } },
+        {
+          $group: {
+            _id:  { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+            count:      { $sum: 1 }
+          }
+        },
+        { $sort: { '_id.year': 1, '_id.month': 1 } },
+        {
+          $project: {
+            _id: 0,
+            year:  '$_id.year',
+            month: '$_id.month',
+            count:      1
+          }
+        }
       ])
     ]);
 
@@ -356,6 +377,7 @@ const getProcurementStats = async (req, res, next) => {
       procurementStats: {
         monthlySpend,           // line chart
         categorySpend,          // pie chart
+        rfqsByMonth,            // bar chart of RFQs
         conversionFunnel: {
           rfqs:         rfqCount,
           quotations:   quotationCount,
