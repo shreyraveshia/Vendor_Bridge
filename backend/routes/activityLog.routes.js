@@ -1,9 +1,15 @@
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
+const { getAllLogs, getMyLogs } = require('../controllers/activityLog.controller');
+const { protect }   = require('../middleware/auth.middleware');
+const { authorize } = require('../middleware/rbac.middleware');
 
-// Placeholder for activity log endpoints
-router.get('/placeholder', (req, res) => {
-  res.json({ message: 'Activity log routes placeholder' });
-});
+router.use(protect);
+
+// GET /api/activity-logs       — admin only
+router.get('/', authorize('admin'), getAllLogs);
+
+// GET /api/activity-logs/mine  — any authenticated user (own logs)
+router.get('/mine', getMyLogs);
 
 module.exports = router;
