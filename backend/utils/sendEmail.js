@@ -20,7 +20,7 @@ const sendEmail = async ({ to, subject, html, attachments = [] }) => {
     service: 'gmail',
     auth: {
       user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_PASS   // App Password (not account password)
+      pass: process.env.GMAIL_APP_PASSWORD   // App Password from .env
     }
   });
 
